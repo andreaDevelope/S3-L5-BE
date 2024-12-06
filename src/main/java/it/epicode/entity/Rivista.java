@@ -7,5 +7,7 @@ import lombok.Data;
 @Data
 @Entity
 public class Rivista extends Stampa {
+
+    @Enumerated(EnumType.STRING)
     Periodicita periodicita;
 }
