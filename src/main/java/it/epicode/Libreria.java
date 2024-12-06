@@ -6,14 +6,15 @@ import it.epicode.enums.Periodicita;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Scanner;
 
 public class Libreria {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("bibliotecaPU");
     private static final Scanner scanner = new Scanner(System.in);
+    private static EntityManager em = emf.createEntityManager();
 
     public static void main(String[] args) {
-        EntityManager em = emf.createEntityManager();
         UtenteDAO utenteDAO = new UtenteDAO(em);
         StampaDAO stampaDAO = new StampaDAO(em);
         PrestitoDAO prestitoDAO = new PrestitoDAO(em);
@@ -43,7 +44,7 @@ public class Libreria {
                 case 6 -> cercaPerAutore(stampaDAO);
                 case 7 -> cercaPerTitolo(stampaDAO);
                 case 8 -> effettuaPrestito(prestitoDAO, utenteDAO, stampaDAO);
-                case 9 -> mostraPrestitiScaduti(prestitoDAO);
+                case 9 -> mostraPrestitiScaduti();
                 case 10 -> {
                     em.close();
                     emf.close();
@@ -114,7 +115,7 @@ public class Libreria {
         String isbn = scanner.nextLine();
         Stampa stampa = stampaDAO.read(isbn);
         if (stampa != null) {
-            System.out.println("Trovato: " + stampa);
+            System.out.println("Trovato: " + stampa.getTitolo() + " " + stampa);
         } else {
             System.out.println("Nessun elemento trovato con questo ISBN.");
         }
@@ -123,28 +124,26 @@ public class Libreria {
     private static void cercaPerAnnoPubblicazione(StampaDAO stampaDAO) {
         System.out.print("Inserisci l'anno di pubblicazione: ");
         int anno = scanner.nextInt();
-        scanner.nextLine(); // Consuma newline
-        stampaDAO.findAll().stream()
-                .filter(s -> s.getAnnoPublicazione() == anno)
-                .forEach(System.out::println);
+        List<Stampa> risultati = stampaDAO.findByAnnoPubblicazione(anno);
+        risultati.forEach(System.out::println);
     }
 
     private static void cercaPerAutore(StampaDAO stampaDAO) {
         System.out.print("Inserisci l'autore: ");
         String autore = scanner.nextLine();
-        stampaDAO.findAll().stream()
-                .filter(s -> s instanceof Libro)
-                .map(s -> (Libro) s)
-                .filter(l -> l.getAutore().equalsIgnoreCase(autore))
-                .forEach(System.out::println);
+        List<Stampa> risultati = stampaDAO.findByAutore(autore);
+        if (risultati.isEmpty()) {
+            System.out.println("Nessun elemento trovato per questo autore.");
+        } else {
+            risultati.forEach(System.out::println);
+        }
     }
 
     private static void cercaPerTitolo(StampaDAO stampaDAO) {
         System.out.print("Inserisci il titolo o parte di esso: ");
         String titolo = scanner.nextLine();
-        stampaDAO.findAll().stream()
-                .filter(s -> s.getTitolo().toLowerCase().contains(titolo.toLowerCase()))
-                .forEach(System.out::println);
+        List<Stampa> risultati = stampaDAO.findByTitolo(titolo);
+        risultati.forEach(System.out::println);
     }
 
     private static void effettuaPrestito(PrestitoDAO prestitoDAO, UtenteDAO utenteDAO, StampaDAO stampaDAO) {
@@ -175,10 +174,18 @@ public class Libreria {
         System.out.println("Prestito effettuato con successo!");
     }
 
-    private static void mostraPrestitiScaduti(PrestitoDAO prestitoDAO) {
-        LocalDate oggi = LocalDate.now();
-        prestitoDAO.findAll().stream()
-                .filter(p -> p.getDataRestituzionePrevista().isBefore(oggi) && p.getDataRestituzioneEffettiva() == null)
-                .forEach(System.out::println);
+    private static void mostraPrestitiScaduti() {
+        List<Prestito> prestitiScaduti = em.createQuery(
+                        "SELECT p FROM Prestito p WHERE p.dataRestituzionePrevista < :oggi AND p.dataRestituzioneEffettiva IS NULL", Prestito.class)
+                .setParameter("oggi", LocalDate.now())
+                .getResultList();
+
+        if (prestitiScaduti.isEmpty()) {
+            System.out.println("Non ci sono prestiti scaduti e non restituiti.");
+        } else {
+            System.out.println("Prestiti scaduti e non restituiti:");
+            prestitiScaduti.forEach(System.out::println);
+        }
     }
+
 }

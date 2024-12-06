@@ -7,7 +7,6 @@ import lombok.Data;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "stampe")
-//@NamedQuery(name="Trova_tutto_Stampa", query="SELECT a FROM Stampa a")
 public class Stampa {
 @Id
 @GeneratedValue(strategy = GenerationType.UUID)

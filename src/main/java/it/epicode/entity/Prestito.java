@@ -2,6 +2,7 @@ package it.epicode.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDate;
 
@@ -15,6 +16,7 @@ public class Prestito {
 
     @ManyToOne
     @JoinColumn(name = "utente_id", nullable = false)
+    @ToString.Exclude
     private Utente utente;
 
     @ManyToOne

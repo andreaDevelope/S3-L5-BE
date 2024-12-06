@@ -1,6 +1,5 @@
 package it.epicode;
 
-import it.epicode.dao.*;
 import it.epicode.entity.*;
 import com.github.javafaker.Faker;
 import it.epicode.enums.Periodicita;
@@ -16,14 +15,12 @@ public class PopolaDB {
     private static final Faker faker = new Faker();
 
     public static void main(String[] args) {
-        // Popola il database con 10 record per ciascuna entità
         popolaLibri();
         popolaRiviste();
         popolaUtenti();
         popolaPrestiti();
     }
 
-    // Popola la tabella Libri con dati casuali
     private static void popolaLibri() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -47,7 +44,6 @@ public class PopolaDB {
         }
     }
 
-    // Popola la tabella Riviste con dati casuali
     private static void popolaRiviste() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -70,7 +66,6 @@ public class PopolaDB {
         }
     }
 
-    // Popola la tabella Utenti con dati casuali
     private static void popolaUtenti() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -92,7 +87,6 @@ public class PopolaDB {
         }
     }
 
-    // Popola la tabella Prestiti con dati casuali
     private static void popolaPrestiti() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -101,24 +95,40 @@ public class PopolaDB {
             List<Utente> utenti = em.createQuery("SELECT u FROM Utente u", Utente.class).getResultList();
             List<Libro> libri = em.createQuery("SELECT l FROM Libro l", Libro.class).getResultList();
 
-            for (int i = 0; i < 10; i++) {
-                Utente utente = utenti.get(faker.number().numberBetween(0, utenti.size()));
-                Libro libro = libri.get(faker.number().numberBetween(0, libri.size()));
-
-                Prestito prestito = new Prestito();
-                prestito.setUtente(utente);
-                prestito.setStampa(libro);  // Può essere anche una rivista
-                prestito.setDataInizioPrestito(LocalDate.now());
-                prestito.setDataRestituzionePrevista(LocalDate.now().plusDays(faker.number().numberBetween(5, 30)));
-
-                em.persist(prestito);
+            if (utenti.size() < 2 || libri.size() < 2) {
+                throw new RuntimeException("Non ci sono abbastanza utenti o libri per creare due prestiti.");
             }
 
+            Prestito prestitoInTempo = new Prestito();
+            prestitoInTempo.setUtente(utenti.get(0));
+            prestitoInTempo.setStampa(libri.get(0));
+            prestitoInTempo.setDataInizioPrestito(LocalDate.of(2024, 1, 1));
+            prestitoInTempo.setDataRestituzionePrevista(LocalDate.of(2024, 1, 31));
+            prestitoInTempo.setDataRestituzioneEffettiva(LocalDate.of(2024, 1, 30));
+
+            em.persist(prestitoInTempo);
+
+            Prestito prestitoInRitardo = new Prestito();
+            prestitoInRitardo.setUtente(utenti.get(1));
+            prestitoInRitardo.setStampa(libri.get(1));
+            prestitoInRitardo.setDataInizioPrestito(LocalDate.of(2023, 2, 1));
+            prestitoInRitardo.setDataRestituzionePrevista(LocalDate.of(2023, 3, 2));
+
+            //lo commento in modo da testare il metodo 9 che richiede un restituzione non effettuata entro i temrini
+            //quindi deve essere oltre il tempo limite ma anche non restituito
+            //prestitoInRitardo.setDataRestituzioneEffettiva(LocalDate.of(2024, 3, 10));
+
+            em.persist(prestitoInRitardo);
+
             em.getTransaction().commit();
-            System.out.println("10 Prestiti popolati nel database!");
+            System.out.println("2 Prestiti popolati nel database!");
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            throw new RuntimeException("Errore durante la popolazione dei prestiti: " + e.getMessage());
         } finally {
             em.close();
         }
     }
+
 }
 
