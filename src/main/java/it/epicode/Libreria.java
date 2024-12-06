@@ -48,6 +48,7 @@ public class Libreria {
                 case 10 -> {
                     em.close();
                     emf.close();
+                    System.out.println("libreria chiusa");
                     System.exit(0);
                 }
                 default -> System.out.println("Opzione non valida. Riprova.");
@@ -63,7 +64,7 @@ public class Libreria {
         int annoPubblicazione = scanner.nextInt();
         System.out.print("Numero di pagine: ");
         int numeroPagine = scanner.nextInt();
-        scanner.nextLine(); // Consuma newline
+        scanner.nextLine();
         System.out.print("Autore: ");
         String autore = scanner.nextLine();
         System.out.print("Genere: ");
