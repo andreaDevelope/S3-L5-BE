@@ -49,6 +49,7 @@ public class Libreria {
                     em.close();
                     emf.close();
                     System.out.println("libreria chiusa");
+                    scanner.close();
                     System.exit(0);
                 }
                 default -> System.out.println("Opzione non valida. Riprova.");
